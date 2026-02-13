@@ -3,25 +3,94 @@
 #include "raylib.h"
 #include "display.h"
 
-void draw_grid(int cellSize, Color color);
+#define N_POINTS (9 * 9 * 9)
+
+void setup();
+void update();
+void render();
+Vector2 project(Vector3 point);
+
+Vector2 projected_points[N_POINTS];
+Vector3 cube_points[N_POINTS];
+Vector3 camera_position = { .x=0, .y=0, .z=-5 };
+Vector3 cube_rotation = { .x=0, .y=0, .z=0 };
+Color color;
+
+int monitor;
+int width;
+int height;
+float fov_factor = 200;                                 // field of view factor
+
+void setup()
+{
+    // start loading an array of vectors (video 26)
+    // from -1 to 1 (in this 9*9*9 cube)
+    int point_count = 0;
+    for (float x = -1; x < 1; x += 0.25) {
+        for (float y = -1; y < 1; y += 0.25) {
+            for (float z = -1; z < 1; z += 0.25) {
+                Vector3 new_point = { .x=x, .y=y, .z=z };
+                cube_points[point_count++] = new_point;
+            }
+        }
+    }
+}
+
+Vector2 project(Vector3 point)
+{
+    Vector2 projected_point = {
+        .x = point.x * fov_factor,
+        .y = point.y * fov_factor,
+    };
+
+    return projected_point;
+}
+
+void update()
+{
+    for (int i = 0; i < N_POINTS; i++) {
+        Vector3 point = cube_points[i];
+        Vector2 projected_point = project(point);
+        
+        projected_points[i] = projected_point;
+    }
+}
+
+void render()
+{
+    for (int i = 0; i < N_POINTS; i++) {
+        Vector2 projected_point = projected_points[i];
+
+        DrawRectangle(
+            projected_point.x + (width/2),
+            projected_point.y + (height/2),
+            5,
+            5,
+            color
+        );
+    }
+}
 
 int main()
 {
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
-
-    InitWindow(0, 0, "3D Renderer");
     SetTargetFPS(60);
 
-    int monitor = GetCurrentMonitor();
-    int width = GetMonitorWidth(monitor);
-    int height = GetMonitorHeight(monitor);
-    Color color = GetColor(0x00FFAAFF);
+    InitWindow(0, 0, "3D Renderer");
+    monitor = GetCurrentMonitor();
+    width = GetMonitorWidth(monitor);
+    height = GetMonitorHeight(monitor);
+    color = GetColor(0x00FF09FF);
+    
+    setup();
 
     while(!WindowShouldClose()) {
         BeginDrawing();
-        
-        draw_grid(5, color);
+
+        update();
+        render();
+        // draw_grid(5, color);
 
         EndDrawing();
     }
