@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "raylib.h"
+#include "vector.h"
 #include "display.h"
 
 #define N_POINTS (9 * 9 * 9)
@@ -19,7 +20,7 @@ Color color;
 int monitor;
 int width;
 int height;
-float fov_factor = 200;                                 // field of view factor
+float fov_factor = 640;                                 // field of view factor
 
 void setup()
 {
@@ -39,8 +40,8 @@ void setup()
 Vector2 project(Vector3 point)
 {
     Vector2 projected_point = {
-        .x = point.x * fov_factor,
-        .y = point.y * fov_factor,
+        .x = (point.x * fov_factor / point.z),
+        .y = (point.y * fov_factor) / point.z,
     };
 
     return projected_point;
@@ -48,10 +49,19 @@ Vector2 project(Vector3 point)
 
 void update()
 {
+    cube_rotation.x += 0.01;
+    cube_rotation.y += 0.01;
+    cube_rotation.z += 0.01;
+    
     for (int i = 0; i < N_POINTS; i++) {
         Vector3 point = cube_points[i];
-        Vector2 projected_point = project(point);
+        Vector3 transformed_point = vec3_rotate_x(point, cube_rotation.x);
+
+        transformed_point = vec3_rotate_y(transformed_point, cube_rotation.y);
+        transformed_point = vec3_rotate_z(transformed_point, cube_rotation.z);
+        transformed_point.z -= camera_position.z;
         
+        Vector2 projected_point = project(transformed_point);
         projected_points[i] = projected_point;
     }
 }
@@ -64,11 +74,13 @@ void render()
         DrawRectangle(
             projected_point.x + (width/2),
             projected_point.y + (height/2),
-            5,
-            5,
+            4,
+            4,
             color
         );
     }
+
+    ClearBackground(BLACK);
 }
 
 int main()
