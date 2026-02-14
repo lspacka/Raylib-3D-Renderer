@@ -2,19 +2,14 @@
 #include <stdint.h>
 #include "raylib.h"
 #include "vector.h"
+#include "triangle.h"
+#include "mesh.h"
+#include "array.h"
 #include "display.h"
 
-#define N_POINTS (9 * 9 * 9)
-
-void setup();
-void update();
-void render();
 Vector2 project(Vector3 point);
-
-Vector2 projected_points[N_POINTS];
-Vector3 cube_points[N_POINTS];
 Vector3 camera_position = { .x=0, .y=0, .z=-5 };
-Vector3 cube_rotation = { .x=0, .y=0, .z=0 };
+triangle_t* triangles_to_render = NULL;
 Color color;
 
 int monitor;
@@ -22,19 +17,14 @@ int width;
 int height;
 float fov_factor = 640;                                 // field of view factor
 
+void setup();
+Vector2 project(Vector3 point);
+void update();
+void render();
+
 void setup()
 {
-    // start loading an array of vectors (video 26)
-    // from -1 to 1 (in this 9*9*9 cube)
-    int point_count = 0;
-    for (float x = -1; x < 1; x += 0.25) {
-        for (float y = -1; y < 1; y += 0.25) {
-            for (float z = -1; z < 1; z += 0.25) {
-                Vector3 new_point = { .x=x, .y=y, .z=z };
-                cube_points[point_count++] = new_point;
-            }
-        }
-    }
+    load_obj_file_data("./assets/cube.obj");
 }
 
 Vector2 project(Vector3 point)
@@ -49,35 +39,63 @@ Vector2 project(Vector3 point)
 
 void update()
 {
-    cube_rotation.x += 0.01;
-    cube_rotation.y += 0.01;
-    cube_rotation.z += 0.01;
+    mesh.rotation.x += 0.01;
+    mesh.rotation.y += 0.01;
+    mesh.rotation.z += 0.01;
     
-    for (int i = 0; i < N_POINTS; i++) {
-        Vector3 point = cube_points[i];
-        Vector3 transformed_point = vec3_rotate_x(point, cube_rotation.x);
+    triangles_to_render = NULL;
+    int num_faces = array_length(mesh.faces);
 
-        transformed_point = vec3_rotate_y(transformed_point, cube_rotation.y);
-        transformed_point = vec3_rotate_z(transformed_point, cube_rotation.z);
-        transformed_point.z -= camera_position.z;
-        
-        Vector2 projected_point = project(transformed_point);
-        projected_points[i] = projected_point;
+    for (int i = 0; i < num_faces; i++) {
+        face_t mesh_face = mesh.faces[i];
+        Vector3 face_vertices[3];
+        triangle_t projected_triangle;
+
+        face_vertices[0] = mesh.vertices[mesh_face.a];
+        face_vertices[1] = mesh.vertices[mesh_face.b];
+        face_vertices[2] = mesh.vertices[mesh_face.c];
+
+        for (int j = 0; j < 3; j++) {
+            Vector3 transformed_vertex = face_vertices[j];
+            transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
+            transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
+            transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
+            transformed_vertex.z -= camera_position.z;
+
+            Vector2 projected_point = project(transformed_vertex);
+
+            projected_point.x += width / 2;
+            projected_point.y += height / 2;
+
+            projected_triangle.points[j] = projected_point;
+        }
+        array_push(triangles_to_render, projected_triangle);
     }
 }
 
 void render()
 {
-    for (int i = 0; i < N_POINTS; i++) {
-        Vector2 projected_point = projected_points[i];
+    int num_triangles = array_length(triangles_to_render);
+    for (int i = 0; i < num_triangles; i++) {
+        triangle_t triangle = triangles_to_render[i];
 
-        DrawRectangle(
-            projected_point.x + (width/2),
-            projected_point.y + (height/2),
-            4,
-            4,
+        draw_triangle(
+            triangle.points[0].x,
+            triangle.points[0].y,
+            triangle.points[1].x,
+            triangle.points[1].y,
+            triangle.points[2].x,
+            triangle.points[2].y,
             color
         );
+
+        // vertices in counterclockwise order (it looks the same..)
+        // DrawTriangleLines (
+        //     triangle.points[0],
+        //     triangle.points[1],
+        //     triangle.points[2],
+        //     color
+        // );
     }
 
     ClearBackground(BLACK);
@@ -88,8 +106,8 @@ int main()
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
     SetTargetFPS(60);
-
     InitWindow(0, 0, "3D Renderer");
+
     monitor = GetCurrentMonitor();
     width = GetMonitorWidth(monitor);
     height = GetMonitorHeight(monitor);
