@@ -89,7 +89,7 @@ void render()
             color
         );
 
-        // vertices in counterclockwise order (it looks the same..)
+        // vertices in counterclockwise order 
         // DrawTriangleLines (
         //     triangle.points[0],
         //     triangle.points[1],
