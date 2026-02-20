@@ -7,7 +7,6 @@
 #include "array.h"
 #include "display.h"
 
-Vector2 project(Vector3 point);
 Vector3 camera_position = { .x=0, .y=0, .z=-5 };
 triangle_t* triangles_to_render = NULL;
 Color color;
@@ -17,20 +16,20 @@ int width;
 int height;
 float fov_factor = 640;                                 // field of view factor
 
-void setup();
-Vector2 project(Vector3 point);
-void update();
-void render();
+// Vector2 project(Vector3 point);
+// void setup();
+// void update();
+// void render();
 
 void setup()
 {
-    load_obj_file_data("./assets/cube.obj");
+    load_obj_file_data("./assets/spaceship.obj");
 }
 
 Vector2 project(Vector3 point)
 {
     Vector2 projected_point = {
-        .x = (point.x * fov_factor / point.z),
+        .x = (point.x * fov_factor) / point.z,
         .y = (point.y * fov_factor) / point.z,
     };
 
@@ -60,6 +59,7 @@ void update()
             transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
             transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
             transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
+            
             transformed_vertex.z -= camera_position.z;
 
             Vector2 projected_point = project(transformed_vertex);
@@ -98,7 +98,13 @@ void render()
         // );
     }
 
-    ClearBackground(BLACK);
+    array_free(triangles_to_render);
+}
+
+void free_resources()
+{
+    array_free(mesh.faces);
+    array_free(mesh.vertices);
 }
 
 int main()
@@ -118,6 +124,7 @@ int main()
     while(!WindowShouldClose()) {
         BeginDrawing();
 
+        ClearBackground(BLACK);
         update();
         render();
         // draw_grid(5, color);
@@ -126,6 +133,7 @@ int main()
     }
 
     CloseWindow();
+    free_resources();
 
     return 0;
 }
