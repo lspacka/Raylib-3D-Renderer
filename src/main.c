@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "raylib.h"
+// #include "raylib.h"
+// #include "raymath.h"
 #include "vector.h"
 #include "triangle.h"
 #include "mesh.h"
 #include "array.h"
 #include "display.h"
 
-Vector3 camera_position = { .x=0, .y=0, .z=-5 };
+Vector3 camera_position = { 0, 0, 0 };
 triangle_t* triangles_to_render = NULL;
 Color color;
 
@@ -23,7 +24,7 @@ float fov_factor = 640;                                 // field of view factor
 
 void setup()
 {
-    load_obj_file_data("./assets/spaceship.obj");
+    load_obj_file_data("./assets/sphere.obj");
 }
 
 Vector2 project(Vector3 point)
@@ -48,27 +49,50 @@ void update()
     for (int i = 0; i < num_faces; i++) {
         face_t mesh_face = mesh.faces[i];
         Vector3 face_vertices[3];
+        Vector3 transformed_vertices[3];
         triangle_t projected_triangle;
 
         face_vertices[0] = mesh.vertices[mesh_face.a];
         face_vertices[1] = mesh.vertices[mesh_face.b];
         face_vertices[2] = mesh.vertices[mesh_face.c];
 
+        // transformation loop
         for (int j = 0; j < 3; j++) {
             Vector3 transformed_vertex = face_vertices[j];
             transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
             transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
             transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
             
-            transformed_vertex.z -= camera_position.z;
+            transformed_vertex.z += 5;
+            transformed_vertices[j] = transformed_vertex;
+        }
 
-            Vector2 projected_point = project(transformed_vertex);
+        // check backface culling
+        Vector3 vec_a = transformed_vertices[0];
+        Vector3 vec_b = transformed_vertices[1];
+        Vector3 vec_c = transformed_vertices[2];
 
+        Vector3 vec_ab = Vector3Subtract(vec_b, vec_a);
+        Vector3 vec_ac = Vector3Subtract(vec_c, vec_a);
+
+        Vector3 face_normal = Vector3CrossProduct(vec_ab, vec_ac);
+
+        Vector3 camera_ray = Vector3Subtract(camera_position, vec_a);
+
+        // check alignment between camera ray and face normal
+        float alignment = Vector3DotProduct(camera_ray, face_normal);
+        // if not aligned skip rendering loop
+        if (alignment < 0)
+            continue;
+
+        // rendering loop
+        for (int j = 0; j < 3; j++) {
+            Vector2 projected_point = project(transformed_vertices[j]);
             projected_point.x += width / 2;
             projected_point.y += height / 2;
-
             projected_triangle.points[j] = projected_point;
         }
+
         array_push(triangles_to_render, projected_triangle);
     }
 }
@@ -121,7 +145,7 @@ int main()
     
     setup();
 
-    while(!WindowShouldClose()) {
+    while (!WindowShouldClose()) {
         BeginDrawing();
 
         ClearBackground(BLACK);
