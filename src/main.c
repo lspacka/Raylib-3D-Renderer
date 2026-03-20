@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-// #include "raylib.h"
-// #include "raymath.h"
 #include "vector.h"
 #include "triangle.h"
 #include "mesh.h"
@@ -11,6 +9,7 @@
 Vector3 camera_position = { 0, 0, 0 };
 triangle_t* triangles_to_render = NULL;
 Color color;
+Color line_color;
 
 int monitor;
 int width;
@@ -68,22 +67,22 @@ void update()
         }
 
         // check backface culling
-        Vector3 vec_a = transformed_vertices[0];
-        Vector3 vec_b = transformed_vertices[1];
-        Vector3 vec_c = transformed_vertices[2];
+        // Vector3 vec_a = transformed_vertices[0];
+        // Vector3 vec_b = transformed_vertices[1];
+        // Vector3 vec_c = transformed_vertices[2];
 
-        Vector3 vec_ab = Vector3Subtract(vec_b, vec_a);
-        Vector3 vec_ac = Vector3Subtract(vec_c, vec_a);
+        // Vector3 vec_ab = Vector3Subtract(vec_b, vec_a);
+        // Vector3 vec_ac = Vector3Subtract(vec_c, vec_a);
 
-        Vector3 face_normal = Vector3CrossProduct(vec_ab, vec_ac);
+        // Vector3 face_normal = Vector3CrossProduct(vec_ab, vec_ac);
 
-        Vector3 camera_ray = Vector3Subtract(camera_position, vec_a);
+        // Vector3 camera_ray = Vector3Subtract(camera_position, vec_a);
 
-        // check alignment between camera ray and face normal
-        float alignment = Vector3DotProduct(camera_ray, face_normal);
-        // if not aligned skip rendering loop
-        if (alignment < 0)
-            continue;
+        // // check alignment between camera ray and face normal
+        // float alignment = Vector3DotProduct(camera_ray, face_normal);
+        // // if not aligned skip rendering loop
+        // if (alignment < 0)
+        //     continue;
 
         // rendering loop
         for (int j = 0; j < 3; j++) {
@@ -103,14 +102,18 @@ void render()
     for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
 
-        draw_triangle(
-            triangle.points[0].x,
-            triangle.points[0].y,
-            triangle.points[1].x,
-            triangle.points[1].y,
-            triangle.points[2].x,
-            triangle.points[2].y,
+        draw_filled_triangle(
+            triangle.points[0].x, triangle.points[0].y,
+            triangle.points[1].x, triangle.points[1].y,
+            triangle.points[2].x, triangle.points[2].y,
             color
+        );
+
+        draw_triangle(
+            triangle.points[0].x, triangle.points[0].y,
+            triangle.points[1].x, triangle.points[1].y,
+            triangle.points[2].x, triangle.points[2].y,
+            line_color
         );
 
         // vertices in counterclockwise order 
@@ -142,6 +145,7 @@ int main()
     width = GetMonitorWidth(monitor);
     height = GetMonitorHeight(monitor);
     color = GetColor(0x00FF09FF);
+    line_color = GetColor(0xFF0000FF);
     
     setup();
 
