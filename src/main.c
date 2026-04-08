@@ -67,22 +67,22 @@ void update()
         }
 
         // check backface culling
-        // Vector3 vec_a = transformed_vertices[0];
-        // Vector3 vec_b = transformed_vertices[1];
-        // Vector3 vec_c = transformed_vertices[2];
+        Vector3 vec_a = transformed_vertices[0];
+        Vector3 vec_b = transformed_vertices[1];
+        Vector3 vec_c = transformed_vertices[2];
 
-        // Vector3 vec_ab = Vector3Subtract(vec_b, vec_a);
-        // Vector3 vec_ac = Vector3Subtract(vec_c, vec_a);
+        Vector3 vec_ab = Vector3Subtract(vec_b, vec_a);
+        Vector3 vec_ac = Vector3Subtract(vec_c, vec_a);
 
-        // Vector3 face_normal = Vector3CrossProduct(vec_ab, vec_ac);
+        Vector3 face_normal = Vector3CrossProduct(vec_ab, vec_ac);
 
-        // Vector3 camera_ray = Vector3Subtract(camera_position, vec_a);
+        Vector3 camera_ray = Vector3Subtract(camera_position, vec_a);
 
-        // // check alignment between camera ray and face normal
-        // float alignment = Vector3DotProduct(camera_ray, face_normal);
-        // // if not aligned skip rendering loop
-        // if (alignment < 0)
-        //     continue;
+        // check alignment between camera ray and face normal
+        float alignment = Vector3DotProduct(camera_ray, face_normal);
+        // if not aligned skip rendering loop
+        if (alignment < 0)
+            continue;
 
         // rendering loop
         for (int j = 0; j < 3; j++) {
@@ -121,7 +121,7 @@ void render()
         //     triangle.points[0],
         //     triangle.points[1],
         //     triangle.points[2],
-        //     color
+        //     line_color
         // );
     }
 

@@ -2,6 +2,7 @@
 #define TRIANGLE_H
 
 #include "raylib.h"
+#include "display.h"
 
 typedef struct {
     int a;
