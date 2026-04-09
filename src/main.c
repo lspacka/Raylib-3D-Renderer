@@ -102,13 +102,15 @@ void render()
     for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
 
-        draw_filled_triangle(
-            triangle.points[0].x, triangle.points[0].y,
-            triangle.points[1].x, triangle.points[1].y,
-            triangle.points[2].x, triangle.points[2].y,
+        // draw filled triangle
+        DrawTriangle(
+            triangle.points[0],
+            triangle.points[1],
+            triangle.points[2],
             color
         );
 
+        // draw mesh
         draw_triangle(
             triangle.points[0].x, triangle.points[0].y,
             triangle.points[1].x, triangle.points[1].y,
@@ -138,7 +140,7 @@ int main()
 {
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_FULLSCREEN_MODE);
-    SetTargetFPS(60);
+    SetConfigFlags(FLAG_VSYNC_HINT);     // sync frame swap to monitor refresh, avoids tearing and timing jitter *
     InitWindow(0, 0, "3D Renderer");
 
     monitor = GetCurrentMonitor();
@@ -165,3 +167,15 @@ int main()
 
     return 0;
 }
+
+
+
+// * the monitor refreshes the image on screen at a fixed rate (60 times per second). 
+// Without vsync, the program just renders frames as fast as it can 
+// and pushes them to the screen whenever they're ready — 
+// which can land in the middle of a monitor refresh, 
+// causing a half-old half-new frame to show (tearing), 
+// or irregular timing between frames (jitter/stutter).
+// FLAG_VSYNC_HINT tells Raylib to wait for the monitor's refresh signal 
+// before swapping the new frame in, so the renders always land cleanly between refreshes. 
+// Much smoother than SetTargetFPS which just uses a timer that can drift.
