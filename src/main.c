@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "vector.h"
 #include "triangle.h"
 #include "mesh.h"
@@ -10,11 +11,13 @@ Vector3 camera_position = { 0, 0, 0 };
 triangle_t* triangles_to_render = NULL;
 Color color;
 Color line_color;
+// Color* color_buffer;
+// Texture2D color_buffer_texture;
 
 int monitor;
 int width;
 int height;
-float fov_factor = 640;                                 // field of view factor
+float fov_factor = 640;         // field of view factor
 
 // Vector2 project(Vector3 point);
 // void setup();
@@ -22,7 +25,13 @@ float fov_factor = 640;                                 // field of view factor
 // void render();
 
 void setup()
-{
+{  
+    color_buffer = malloc(sizeof(Color) * width * height);
+    Image blank = GenImageColor(width, height, BLACK);
+    color_buffer_texture = LoadTextureFromImage(blank);
+    UnloadImage(blank);
+
+
     load_obj_file_data("./assets/sphere.obj");
 }
 
@@ -103,12 +112,18 @@ void render()
         triangle_t triangle = triangles_to_render[i];
 
         // draw filled triangle
-        DrawTriangle(
-            triangle.points[0],
-            triangle.points[1],
-            triangle.points[2],
-            color
-        );
+        // DrawTriangle(
+        //     triangle.points[0],
+        //     triangle.points[1],
+        //     triangle.points[2],
+        //     color
+        // );
+        // draw_filled_triangle(
+        //     triangle.points[0].x, triangle.points[0].y,
+        //     triangle.points[1].x, triangle.points[1].y,
+        //     triangle.points[2].x, triangle.points[2].y,
+        //     color
+        // );
 
         // draw mesh
         draw_triangle(
@@ -126,6 +141,9 @@ void render()
         //     line_color
         // );
     }
+
+    UpdateTexture(color_buffer_texture, color_buffer);
+    DrawTexture(color_buffer_texture, 0, 0, WHITE);
 
     array_free(triangles_to_render);
 }
@@ -146,8 +164,8 @@ int main()
     monitor = GetCurrentMonitor();
     width = GetMonitorWidth(monitor);
     height = GetMonitorHeight(monitor);
-    color = GetColor(0x00FF09FF);
-    line_color = GetColor(0xFF0000FF);
+    color = GetColor(0x00FFFFFF);
+    line_color = GetColor(0xFF6600FF);
     
     setup();
 
@@ -155,9 +173,10 @@ int main()
         BeginDrawing();
 
         ClearBackground(BLACK);
+        // draw_grid(15, color);
+        clear_color_buffer(BLACK);
         update();
         render();
-        // draw_grid(5, color);
 
         EndDrawing();
     }
